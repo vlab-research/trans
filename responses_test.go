@@ -7,7 +7,7 @@ import (
 
 func TestTranslateWorksWithGoodData(t *testing.T) {
 
-	ft := &FormTranslator{"123", map[string]*FieldTranslator{
+	ft := &FormTranslator{map[string]*FieldTranslator{
 		"foo": {true, map[string]string{
 			"A": "Makin that monay",
 		}},
@@ -30,20 +30,20 @@ func TestTranslateWorksWithGoodData(t *testing.T) {
 	assert.Equal(t, "anything", *res)
 }
 
-func TestTranslateErrorsIfInvalidAnswer(t *testing.T) {
-	ft := &FormTranslator{"123", map[string]*FieldTranslator{
+func TestTranslateReturnsNilIfInvalidAnswer(t *testing.T) {
+	ft := &FormTranslator{map[string]*FieldTranslator{
 		"foo": {true, map[string]string{
 			"A": "Makin that monay",
 		}},
 	}}
 
 	res, err := Translate("foo", "B", ft)
-	assert.NotNil(t, err)
+	assert.Nil(t, err)
 	assert.Nil(t, res)
 }
 
 func TestTranslateErrorsIfImpossibleRef(t *testing.T) {
-	ft := &FormTranslator{"123", map[string]*FieldTranslator{
+	ft := &FormTranslator{map[string]*FieldTranslator{
 		"foo": {true, map[string]string{
 			"A": "Makin that monay",
 		}},

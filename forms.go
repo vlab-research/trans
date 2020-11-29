@@ -35,8 +35,7 @@ type FieldTranslator struct {
 }
 
 type FormTranslator struct {
-	Surveyid string                      `json:"surveyid"`
-	Fields   map[string]*FieldTranslator `json:"fields"`
+	Fields map[string]*FieldTranslator `json:"fields"`
 }
 
 type Answer struct {

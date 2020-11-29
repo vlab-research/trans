@@ -22,10 +22,10 @@ func Translate(qr, response string, ft *FormTranslator) (*string, error) {
 		return &response, nil
 	}
 
-	// If not valid answer, error
+	// If not valid answer, dont error, just dont translate
 	translated, ok := fieldTranslator.Mapping[response]
 	if !ok {
-		return nil, &TranslationError{fmt.Sprintf("Answer %v not valid for question with ref %v", response, qr)}
+		return nil, nil
 	}
 
 	return &translated, nil
