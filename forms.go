@@ -25,8 +25,9 @@ type Field struct {
 }
 
 type FormJson struct {
-	Title  string   `json:"title"`
-	Fields []*Field `json:"fields"`
+	Title           string   `json:"title"`
+	Fields          []*Field `json:"fields"`
+	ThankYouScreens []*Field `json:"thankyou_screens"`
 }
 
 type FieldTranslator struct {
@@ -164,7 +165,14 @@ func findField(ref string, form *FormJson) (*Field, error) {
 	return nil, &FormTranslationError{fmt.Sprintf("Could not find field ref %v in form titled %v", ref, form.Title)}
 }
 
+func prepForms(a, b *FormJson) {
+	a.Fields = append(a.Fields, a.ThankYouScreens...)
+	b.Fields = append(b.Fields, b.ThankYouScreens...)
+}
+
 func makeTranslator(form, destForm *FormJson, byRef bool) (*FormTranslator, error) {
+	prepForms(form, destForm)
+
 	if len(form.Fields) != len(destForm.Fields) {
 		return nil, &FormTranslationError{"Forms have different lengths!"}
 	}

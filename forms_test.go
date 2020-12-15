@@ -298,7 +298,18 @@ func TestMakeFormTranslatorByShape(t *testing.T) {
            "title": "वर्तमान में आप किस राज्य में रहते हैं?",
            "ref": "baz",
            "properties": {},
-           "type": "number"}]}`,
+           "type": "number"}],
+         "thankyou_screens": [
+	  {
+	    "id": "DefaultTyScreen",
+	    "ref": "default_tys",
+	    "title": "Done! Your information was sent perfectly.",
+	    "properties": {
+	      "show_button": false,
+	      "share_icons": false
+	    }
+	  }
+	]}`,
 
 		`{"fields": [
           {"title": "What is your gender? ",
@@ -318,7 +329,19 @@ func TestMakeFormTranslatorByShape(t *testing.T) {
            {"title": "How old are you?",
            "ref": "eng_baz",
            "properties": {},
-           "type": "number"}]}`}
+           "type": "number"}],
+         "thankyou_screens": [
+	  {
+	    "id": "DefaultTyScreen",
+	    "ref": "default_tys",
+	    "title": "Done! Your information was sent perfectly.",
+	    "properties": {
+	      "show_button": false,
+	      "share_icons": false
+	    }
+	  }
+	]}`,
+	}
 
 	forms := []FormJson{}
 	for _, j := range jsons {
@@ -333,6 +356,9 @@ func TestMakeFormTranslatorByShape(t *testing.T) {
 	assert.Equal(t, "Male", ft.Fields["foo"].Mapping["पुरुष"])
 	assert.Equal(t, false, ft.Fields["baz"].Translate)
 	assert.Equal(t, 0, len(ft.Fields["baz"].Mapping))
+
+	assert.Equal(t, false, ft.Fields["default_tys"].Translate)
+	assert.Equal(t, 0, len(ft.Fields["default_tys"].Mapping))
 }
 
 func TestMakeFormTranslatorByRef(t *testing.T) {
@@ -394,3 +420,5 @@ func TestMakeFormTranslatorByRef(t *testing.T) {
 	assert.Equal(t, false, ft.Fields["baz"].Translate)
 	assert.Equal(t, 0, len(ft.Fields["baz"].Mapping))
 }
+
+// DEAL WITH default_tys!!!
