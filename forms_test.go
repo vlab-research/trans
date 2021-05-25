@@ -40,6 +40,27 @@ func TestExtractAnswersDoesntFailIfNoAnswers(t *testing.T) {
 	assert.NotNil(t, err)
 }
 
+func TestDoesntTranslateCertainFieldTypesLikeOpinionScale(t *testing.T) {
+	fields := []string{
+		`{"id": "YmJEQUEqh0h1", "properties": {"labels": {"left": "Not at all concerned", "right": "Very concerned"}, "start_at_one": true, "steps": 5}, 
+                  "ref": "9ddb9864-e684-4c69-8dfe-24648ce5a6a0", 
+                  "title": "How concerned are you about getting infected with COVID-19?", 
+                  "type": "opinion_scale", 
+                  "validations": {"required": false}}`,
+	}
+
+	for _, field := range fields {
+		f := new(Field)
+		json.Unmarshal([]byte(field), f)
+
+		res, err := MakeFieldTranslator(f, f)
+
+		assert.Nil(t, err)
+		assert.False(t, res.Translate)
+	}
+
+}
+
 func TestExtractAnswersGetsFromText(t *testing.T) {
 	fields := []string{
 		// Dash before

@@ -138,8 +138,6 @@ func MakeMCTranslator(src *Field, dst *Field) (map[string]string, error) {
 
 var translatorMakers = map[string]func(*Field, *Field) (map[string]string, error){
 	"multiple_choice": MakeMCTranslator,
-	"opinion_scale":   MakeMCTranslator,
-	"rating":          MakeMCTranslator,
 }
 
 func MakeFieldTranslator(field, destField *Field) (*FieldTranslator, error) {
