@@ -53,7 +53,9 @@ func (e *FormTranslationError) Error() string {
 }
 
 func GetValue(field *Field, label string) (string, error) {
-	r, err := regexp.Compile(`\n-? ?` + label + `.? ([^\n]+)`)
+
+	// (?:[^\S\r\n]|[-\.\)])  =  some combination of non-newline whitespace and - and . and )
+	r, err := regexp.Compile(`\n-? ?` + label + `(?:[^\S\r\n]|[-\.\)])+([^\n]+)`)
 
 	if err != nil {
 		return "", err

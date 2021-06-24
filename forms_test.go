@@ -42,10 +42,10 @@ func TestExtractAnswersDoesntFailIfNoAnswers(t *testing.T) {
 
 func TestDoesntTranslateCertainFieldTypesLikeOpinionScale(t *testing.T) {
 	fields := []string{
-		`{"id": "YmJEQUEqh0h1", "properties": {"labels": {"left": "Not at all concerned", "right": "Very concerned"}, "start_at_one": true, "steps": 5}, 
-                  "ref": "9ddb9864-e684-4c69-8dfe-24648ce5a6a0", 
-                  "title": "How concerned are you about getting infected with COVID-19?", 
-                  "type": "opinion_scale", 
+		`{"id": "YmJEQUEqh0h1", "properties": {"labels": {"left": "Not at all concerned", "right": "Very concerned"}, "start_at_one": true, "steps": 5},
+                  "ref": "9ddb9864-e684-4c69-8dfe-24648ce5a6a0",
+                  "title": "How concerned are you about getting infected with COVID-19?",
+                  "type": "opinion_scale",
                   "validations": {"required": false}}`,
 	}
 
@@ -91,7 +91,38 @@ func TestExtractAnswersGetsFromText(t *testing.T) {
                          {"label": "B"},
                          {"label": "C"},
                          {"label": "D"}]},
-         "type": "multiple_choice"}`}
+         "type": "multiple_choice"}`,
+
+		// tabs instead of spaces
+		`{"title": "Which state do you currently live in?\nA-\tfoo 91  bar\nB-\tJharkhand\nC-\tOdisha\nD-\tUttar Pradesh",
+         "ref": "20218ad0-96c8-4799-bdfe-90c689c5c206",
+         "properties": {
+             "choices": [{"label": "A"},
+                         {"label": "B"},
+                         {"label": "C"},
+                         {"label": "D"}]},
+         "type": "multiple_choice"}`,
+
+		// No space
+		`{"title": "Which state do you currently live in?\nA-foo 91  bar\nB-Jharkhand\nC-Odisha\nD-Uttar Pradesh",
+         "ref": "20218ad0-96c8-4799-bdfe-90c689c5c206",
+         "properties": {
+             "choices": [{"label": "A"},
+                         {"label": "B"},
+                         {"label": "C"},
+                         {"label": "D"}]},
+         "type": "multiple_choice"}`,
+
+		// Lots of symbols
+		`{"title": "Which state do you currently live in?\n- A.. foo 91  bar\n- B.) Jharkhand\n- C. Odisha\n- D. Uttar Pradesh",
+		"ref": "20218ad0-96c8-4799-bdfe-90c689c5c206",
+		"properties": {
+		"choices": [{"label": "A"},
+			{"label": "B"},
+			{"label": "C"},
+			{"label": "D"}]},
+		"type": "multiple_choice"}`,
+	}
 
 	for _, field := range fields {
 		f := new(Field)
@@ -106,45 +137,46 @@ func TestExtractAnswersGetsFromText(t *testing.T) {
 func TestExtractAnswersErrorsWhenBadFormat(t *testing.T) {
 	fields := []string{
 
-		// Too many symbols after letter
-		`{"title": "Which state do you currently live in?\n- A.. foo 91  bar\n- B. Jharkhand\n- C. Odisha\n- D. Uttar Pradesh",
-		"ref": "20218ad0-96c8-4799-bdfe-90c689c5c206",
-		"properties": {
-		"choices": [{"label": "A"},
-			{"label": "B"},
-			{"label": "C"},
-			{"label": "D"}]},
-		"type": "multiple_choice"}`,
-
 		// no \n newline character before letters
 		`{"title": "Which state do you currently live in?A. foo 91  bar\nB. Jharkhand\nC. Odisha\nD. Uttar Pradesh",
-         "ref": "20218ad0-96c8-4799-bdfe-90c689c5c206",
-         "properties": {
-             "choices": [{"label": "A"},
-                         {"label": "B"},
-                         {"label": "C"},
-                         {"label": "D"}]},
-         "type": "multiple_choice"}`,
+		"ref": "20218ad0-96c8-4799-bdfe-90c689c5c206",
+		"properties": {
+		    "choices": [{"label": "A"},
+		                {"label": "B"},
+		                {"label": "C"},
+		                {"label": "D"}]},
+		"type": "multiple_choice"}`,
 
 		// Multiple matches for a character
 		`{"title": "Which state do you currently live in?\nA. foo 91  bar\nB. Jharkhand\nC. Odisha\nA. Uttar Pradesh",
-         "ref": "20218ad0-96c8-4799-bdfe-90c689c5c206",
-         "properties": {
-             "choices": [{"label": "A"},
-                         {"label": "B"},
-                         {"label": "C"},
-                         {"label": "D"}]},
-         "type": "multiple_choice"}`,
+		"ref": "20218ad0-96c8-4799-bdfe-90c689c5c206",
+		"properties": {
+		    "choices": [{"label": "A"},
+		                {"label": "B"},
+		                {"label": "C"},
+		                {"label": "D"}]},
+		"type": "multiple_choice"}`,
 
 		// Missing one label
 		`{"title": "Which state do you currently live in?\nA- foo 91  bar\nB- Jharkhand\nC- Odisha\n",
-         "ref": "20218ad0-96c8-4799-bdfe-90c689c5c206",
-         "properties": {
-             "choices": [{"label": "A"},
-                         {"label": "B"},
-                         {"label": "C"},
-                         {"label": "D"}]},
-         "type": "multiple_choice"}`}
+		"ref": "20218ad0-96c8-4799-bdfe-90c689c5c206",
+		"properties": {
+		    "choices": [{"label": "A"},
+		                {"label": "B"},
+		                {"label": "C"},
+		                {"label": "D"}]},
+		"type": "multiple_choice"}`,
+
+		// no space or symbol
+		`{"title": "Which state do you currently live in?\nAfoo 91  bar\nB- Jharkhand\nC- Odisha\nD- Uttar Pradesh",
+		"ref": "20218ad0-96c8-4799-bdfe-90c689c5c206",
+		"properties": {
+		    "choices": [{"label": "A"},
+		                {"label": "B"},
+		                {"label": "C"},
+		                {"label": "D"}]},
+		"type": "multiple_choice"}`,
+	}
 
 	for _, field := range fields {
 		f := new(Field)
