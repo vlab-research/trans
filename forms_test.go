@@ -2,8 +2,9 @@ package trans
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestExtractAnswersGetsSimpleLabels(t *testing.T) {
@@ -130,6 +131,32 @@ func TestExtractAnswersGetsFromText(t *testing.T) {
 
 		res, _ := ExtractAnswers(f)
 		expected := []Answer{{"A", "foo 91  bar"}, {"B", "Jharkhand"}, {"C", "Odisha"}, {"D", "Uttar Pradesh"}}
+		assert.Equal(t, expected, res)
+	}
+}
+
+func TestExtractAnswersGetsFromTextWithProblematicStartingLetter(t *testing.T) {
+	fields := []string{
+		// Dash before
+		`{"title": "How easy or difficult is it to get the COVID-19 vaccination for yourself? Would you say it is:\n\n- A. Very difficult\n- B. A bit difficult\n- C. Quite easy\n- D. Very easy\n- E. Don’t know/Can’t say",
+		"ref": "20218ad0-96c8-4799-bdfe-90c689c5c206",
+		"properties": {
+		"choices": [{"label": "A"},
+			{"label": "B"},
+			{"label": "C"},
+			{"label": "D"},
+                        {"label": "E"}]},
+		"type": "multiple_choice"}`,
+	}
+
+	for _, field := range fields {
+		f := new(Field)
+		json.Unmarshal([]byte(field), f)
+
+		res, _ := ExtractAnswers(f)
+
+		expected := []Answer{{"A", "Very difficult"}, {"B", "A bit difficult"}, {"C", "Quite easy"}, {"D", "Very easy"}, {"E", "Don’t know/Can’t say"}}
+
 		assert.Equal(t, expected, res)
 	}
 }

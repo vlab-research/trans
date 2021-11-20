@@ -52,23 +52,28 @@ func (e *FormTranslationError) Error() string {
 	return e.Message
 }
 
-func GetValue(field *Field, label string) (string, error) {
+func MakeRegexp(label string) (*regexp.Regexp, error) {
 
 	// (?:[^\S\r\n]|[-\.\)])  =  some combination of non-newline whitespace and - and . and )
 	r, err := regexp.Compile(`\n-? ?` + label + `(?:[^\S\r\n]|[-\.\)])+([^\n]+)`)
+	return r, err
+}
+
+func GetValue(title string, label string) (string, error) {
+	r, err := MakeRegexp(label)
 
 	if err != nil {
 		return "", err
 	}
 
-	matches := r.FindAllStringSubmatch(field.Title, -1)
+	matches := r.FindAllStringSubmatch(title, -1)
 	if len(matches) != 1 {
-		return "", &FormTranslationError{fmt.Sprintf("Could not find label %v in field text %v", label, field.Title)}
+		return "", &FormTranslationError{fmt.Sprintf("Could not find label %v in field text %v", label, title)}
 	}
 
 	res := matches[0]
 	if len(res) != 2 {
-		return "", &FormTranslationError{fmt.Sprintf("Could not find label %v in field text %v", label, field.Title)}
+		return "", &FormTranslationError{fmt.Sprintf("Could not find label %v in field text %v", label, title)}
 	}
 
 	return res[1], nil
@@ -95,7 +100,7 @@ func ExtractAnswers(field *Field) ([]Answer, error) {
 	ans := make([]Answer, N)
 	for i, l := range labels {
 		if shortened {
-			v, err := GetValue(field, l)
+			v, err := GetValue(field.Title, l)
 			if err != nil {
 				return []Answer{}, err
 			}
