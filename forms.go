@@ -27,7 +27,7 @@ type Field struct {
 type FormJson struct {
 	Title           string   `json:"title"`
 	Fields          []*Field `json:"fields"`
-	ThankYouScreens []*Field `json:"thankyou_screens"`
+	ThankYouScreens []*Field `json:"thankyou_screens,omitempty"`
 }
 
 type FieldTranslator struct {
@@ -52,34 +52,54 @@ func (e *FormTranslationError) Error() string {
 	return e.Message
 }
 
-func MakeRegexp(label string) (*regexp.Regexp, error) {
+func ExtractLabels(options string) ([]*Answer, error) {
+	r, _ := regexp.Compile(`(?:^|\n)(?:- ?([A-Z])(?:[^\S\r\n]|[-\.\)])+|([A-Z])[-\.\)]+[^\S\r\n]?)([^\n]+)`)
+	matches := r.FindAllStringSubmatch(options, -1)
 
-	// (?:[^\S\r\n]|[-\.\)])  =  some combination of non-newline whitespace and - and . and )
-	r, err := regexp.Compile(`\n-? ?` + label + `(?:[^\S\r\n]|[-\.\)])+([^\n]+)`)
-	return r, err
+	answers := []*Answer{}
+
+	for _, match := range matches {
+		if len(match) != 4 {
+			return answers, fmt.Errorf("Could not make labels from options: %s", options)
+		}
+		if match[1] == "" && match[2] == "" {
+			return answers, fmt.Errorf("Could not make labels from options: %s", options)
+		}
+		if match[1] != "" {
+			answers = append(answers, &Answer{match[1], match[3]})
+		}
+		if match[2] != "" {
+			answers = append(answers, &Answer{match[2], match[3]})
+		}
+
+	}
+
+	return answers, nil
 }
 
-func GetValue(title string, label string) (string, error) {
-	r, err := MakeRegexp(label)
-
-	if err != nil {
-		return "", err
+func mapResponse(ans []*Answer) []string {
+	res := make([]string, len(ans))
+	for i, a := range ans {
+		res[i] = a.Response
 	}
-
-	matches := r.FindAllStringSubmatch(title, -1)
-	if len(matches) != 1 {
-		return "", &FormTranslationError{fmt.Sprintf("Could not find label %v in field text %v", label, title)}
-	}
-
-	res := matches[0]
-	if len(res) != 2 {
-		return "", &FormTranslationError{fmt.Sprintf("Could not find label %v in field text %v", label, title)}
-	}
-
-	return res[1], nil
+	return res
 }
 
-func ExtractAnswers(field *Field) ([]Answer, error) {
+func compare(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	for i, bb := range b {
+		if a[i] != bb {
+			return false
+		}
+	}
+
+	return true
+}
+
+func ExtractAnswers(field *Field) ([]*Answer, error) {
 	choices := field.Properties.Choices
 	N := len(choices)
 
@@ -97,26 +117,32 @@ func ExtractAnswers(field *Field) ([]Answer, error) {
 	// add metadata to description?
 	shortened := labels[0] == "A"
 
-	ans := make([]Answer, N)
-	for i, l := range labels {
-		if shortened {
-			v, err := GetValue(field.Title, l)
-			if err != nil {
-				return []Answer{}, err
-			}
+	answers := make([]*Answer, N)
 
-			ans[i] = Answer{l, v}
-		} else {
-			ans[i] = Answer{l, l}
+	if shortened {
+		a, err := ExtractLabels(field.Title)
+		if err != nil {
+			return answers, err
 		}
+
+		if !compare(labels, mapResponse(a)) {
+			return answers, fmt.Errorf("Problem extracting values for label: %s from question: %s", labels, field.Title)
+
+		}
+
+		return a, nil
 	}
 
-	return ans, nil
+	for i, label := range labels {
+		answers[i] = &Answer{label, label}
+	}
+	return answers, nil
+
 }
 
 func MakeMCTranslator(src *Field, dst *Field) (map[string]string, error) {
 	fields := []*Field{src, dst}
-	ans := make([][]Answer, len(fields))
+	ans := make([][]*Answer, len(fields))
 
 	for i, f := range fields {
 		a, err := ExtractAnswers(f)

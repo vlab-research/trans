@@ -7,6 +7,79 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestExtractLabels(t *testing.T) {
+	matches, err := ExtractLabels("A dog walks in")
+	assert.Nil(t, err)
+	assert.Equal(t, 0, len(matches))
+
+	matches, err = ExtractLabels("A dog walks in\nA cat walks in")
+	assert.Nil(t, err)
+	assert.Equal(t, 0, len(matches))
+
+	matches, err = ExtractLabels("A. dog walks in")
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(matches))
+	assert.Equal(t, "A", matches[0].Response)
+	assert.Equal(t, "dog walks in", matches[0].Value)
+
+	matches, err = ExtractLabels("A) dog walks in")
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(matches))
+	assert.Equal(t, "A", matches[0].Response)
+	assert.Equal(t, "dog walks in", matches[0].Value)
+
+	matches, err = ExtractLabels("A.- dog walks in")
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(matches))
+	assert.Equal(t, "A", matches[0].Response)
+	assert.Equal(t, "dog walks in", matches[0].Value)
+
+	matches, err = ExtractLabels("A).- dog walks in")
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(matches))
+	assert.Equal(t, "A", matches[0].Response)
+	assert.Equal(t, "dog walks in", matches[0].Value)
+
+	matches, err = ExtractLabels("-A. dog walks in")
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(matches))
+	assert.Equal(t, "A", matches[0].Response)
+	assert.Equal(t, "dog walks in", matches[0].Value)
+
+	matches, err = ExtractLabels("-A dog walks in")
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(matches))
+	assert.Equal(t, "A", matches[0].Response)
+	assert.Equal(t, "dog walks in", matches[0].Value)
+
+	matches, err = ExtractLabels("- A. dog walks in")
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(matches))
+	assert.Equal(t, "A", matches[0].Response)
+	assert.Equal(t, "dog walks in", matches[0].Value)
+
+	matches, _ = ExtractLabels("-A. dog walks in\n-B. cat walks in")
+	assert.Equal(t, 2, len(matches))
+	assert.Equal(t, "A", matches[0].Response)
+	assert.Equal(t, "dog walks in", matches[0].Value)
+	assert.Equal(t, "B", matches[1].Response)
+	assert.Equal(t, "cat walks in", matches[1].Value)
+
+	matches, _ = ExtractLabels("A) dog walks in\nB) cat walks in")
+	assert.Equal(t, 2, len(matches))
+	assert.Equal(t, "A", matches[0].Response)
+	assert.Equal(t, "dog walks in", matches[0].Value)
+	assert.Equal(t, "B", matches[1].Response)
+	assert.Equal(t, "cat walks in", matches[1].Value)
+
+	matches, _ = ExtractLabels("Hello paragraph\nA man\nA) dog walks in\nB) cat walks in")
+	assert.Equal(t, 2, len(matches))
+	assert.Equal(t, "A", matches[0].Response)
+	assert.Equal(t, "dog walks in", matches[0].Value)
+	assert.Equal(t, "B", matches[1].Response)
+	assert.Equal(t, "cat walks in", matches[1].Value)
+}
+
 func TestExtractAnswersGetsSimpleLabels(t *testing.T) {
 	field := `{
         "title": "What is your gender? ",
@@ -22,7 +95,7 @@ func TestExtractAnswersGetsSimpleLabels(t *testing.T) {
 
 	res, err := ExtractAnswers(f)
 	assert.Nil(t, err)
-	assert.Equal(t, []Answer{{"Male", "Male"}, {"Female", "Female"}, {"Other", "Other"}}, res)
+	assert.Equal(t, []*Answer{{"Male", "Male"}, {"Female", "Female"}, {"Other", "Other"}}, res)
 }
 
 func TestExtractAnswersDoesntFailIfNoAnswers(t *testing.T) {
@@ -106,13 +179,13 @@ func TestExtractAnswersGetsFromText(t *testing.T) {
 
 		// No space
 		`{"title": "Which state do you currently live in?\nA-foo 91  bar\nB-Jharkhand\nC-Odisha\nD-Uttar Pradesh",
-         "ref": "20218ad0-96c8-4799-bdfe-90c689c5c206",
-         "properties": {
-             "choices": [{"label": "A"},
-                         {"label": "B"},
-                         {"label": "C"},
-                         {"label": "D"}]},
-         "type": "multiple_choice"}`,
+		"ref": "20218ad0-96c8-4799-bdfe-90c689c5c206",
+		"properties": {
+		    "choices": [{"label": "A"},
+		                {"label": "B"},
+		                {"label": "C"},
+		                {"label": "D"}]},
+		"type": "multiple_choice"}`,
 
 		// Lots of symbols
 		`{"title": "Which state do you currently live in?\n- A.. foo 91  bar\n- B.) Jharkhand\n- C. Odisha\n- D. Uttar Pradesh",
@@ -130,7 +203,7 @@ func TestExtractAnswersGetsFromText(t *testing.T) {
 		json.Unmarshal([]byte(field), f)
 
 		res, _ := ExtractAnswers(f)
-		expected := []Answer{{"A", "foo 91  bar"}, {"B", "Jharkhand"}, {"C", "Odisha"}, {"D", "Uttar Pradesh"}}
+		expected := []*Answer{{"A", "foo 91  bar"}, {"B", "Jharkhand"}, {"C", "Odisha"}, {"D", "Uttar Pradesh"}}
 		assert.Equal(t, expected, res)
 	}
 }
@@ -155,7 +228,7 @@ func TestExtractAnswersGetsFromTextWithProblematicStartingLetter(t *testing.T) {
 
 		res, _ := ExtractAnswers(f)
 
-		expected := []Answer{{"A", "Very difficult"}, {"B", "A bit difficult"}, {"C", "Quite easy"}, {"D", "Very easy"}, {"E", "Don’t know/Can’t say"}}
+		expected := []*Answer{{"A", "Very difficult"}, {"B", "A bit difficult"}, {"C", "Quite easy"}, {"D", "Very easy"}, {"E", "Don’t know/Can’t say"}}
 
 		assert.Equal(t, expected, res)
 	}
