@@ -22,6 +22,12 @@ func TestExtractLabels(t *testing.T) {
 	assert.Equal(t, "A", matches[0].Response)
 	assert.Equal(t, "dog walks in", matches[0].Value)
 
+	matches, err = ExtractLabels("A- dog walks in")
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(matches))
+	assert.Equal(t, "A", matches[0].Response)
+	assert.Equal(t, "dog walks in", matches[0].Value)
+
 	matches, err = ExtractLabels("A) dog walks in")
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(matches))
@@ -78,6 +84,13 @@ func TestExtractLabels(t *testing.T) {
 	assert.Equal(t, "dog walks in", matches[0].Value)
 	assert.Equal(t, "B", matches[1].Response)
 	assert.Equal(t, "cat walks in", matches[1].Value)
+
+	// example that switches from hyphens to en-dashes...
+	matches, _ = ExtractLabels("Hello\nA- En un hospital\nB– Con mi médico familiar")
+	assert.Equal(t, 2, len(matches))
+	assert.Equal(t, "A", matches[0].Response)
+	assert.Equal(t, "En un hospital", matches[0].Value)
+	assert.Equal(t, "B", matches[1].Response)
 }
 
 func TestExtractAnswersGetsSimpleLabels(t *testing.T) {
@@ -496,9 +509,9 @@ func TestMakeFormTranslatorByShape(t *testing.T) {
 	]}`,
 	}
 
-	forms := []FormJson{}
+	forms := []Form{}
 	for _, j := range jsons {
-		f := new(FormJson)
+		f := new(Form)
 		json.Unmarshal([]byte(j), f)
 		forms = append(forms, *f)
 	}
@@ -559,9 +572,9 @@ func TestMakeFormTranslatorByRef(t *testing.T) {
                           {"label": "Other"}]},
            "type": "multiple_choice"}]}`}
 
-	forms := []FormJson{}
+	forms := []Form{}
 	for _, j := range jsons {
-		f := new(FormJson)
+		f := new(Form)
 		json.Unmarshal([]byte(j), f)
 		forms = append(forms, *f)
 	}

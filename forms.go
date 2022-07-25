@@ -1,6 +1,7 @@
 package trans
 
 import (
+	"encoding/json"
 	"fmt"
 	"regexp"
 )
@@ -24,10 +25,16 @@ type Field struct {
 	Properties FieldProperties `json:"properties,omitempty"`
 }
 
-type FormJson struct {
-	Title           string   `json:"title"`
-	Fields          []*Field `json:"fields"`
-	ThankYouScreens []*Field `json:"thankyou_screens,omitempty"`
+type Workspace struct {
+	Href string `json:"href,omitempty"`
+}
+
+type Form struct {
+	Workspace       Workspace       `json:"workspace,omitempty"`
+	Title           string          `json:"title"`
+	Fields          []*Field        `json:"fields"`
+	ThankYouScreens []*Field        `json:"thankyou_screens,omitempty"`
+	Logic           json.RawMessage `json:"logic,omitempty"`
 }
 
 type FieldTranslator struct {
@@ -53,7 +60,9 @@ func (e *FormTranslationError) Error() string {
 }
 
 func ExtractLabels(options string) ([]*Answer, error) {
-	r, _ := regexp.Compile(`(?:^|\n)(?:- ?([A-Z])(?:[^\S\r\n]|[-\.\)])+|([A-Z])[-\.\)]+[^\S\r\n]?)([^\n]+)`)
+	character := `[A-Z]` // [\p{L}] for unicode? Only caps?
+	base := `(?:^|\n)(?:- ?(%s)(?:[^\S\r\n]|[\p{Pd}-\.\)])+|(%s)[\p{Pd}-\.\)]+[^\S\r\n]?)([^\n]+)`
+	r, _ := regexp.Compile(fmt.Sprintf(base, character, character))
 	matches := r.FindAllStringSubmatch(options, -1)
 
 	answers := []*Answer{}
@@ -115,8 +124,10 @@ func ExtractAnswers(field *Field) ([]*Answer, error) {
 	// NOTE: this is how we test if we should search the
 	// text for the answer. It's pretty hokey!
 	// add metadata to description?
-	shortened := labels[0] == "A"
 
+	// another option - try to extractlabels and if it fails with an error
+	// make it none? This is elegant but doesn't help formatting issues.
+	shortened := labels[0] == "A"
 	answers := make([]*Answer, N)
 
 	if shortened {
@@ -187,7 +198,7 @@ func MakeFieldTranslator(field, destField *Field) (*FieldTranslator, error) {
 	return &FieldTranslator{false, nil}, nil
 }
 
-func findField(ref string, form *FormJson) (*Field, error) {
+func findField(ref string, form *Form) (*Field, error) {
 	for _, f := range form.Fields {
 		if f.Ref == ref {
 			return f, nil
@@ -196,12 +207,12 @@ func findField(ref string, form *FormJson) (*Field, error) {
 	return nil, &FormTranslationError{fmt.Sprintf("Could not find field ref %v in form titled %v", ref, form.Title)}
 }
 
-func prepForms(a, b *FormJson) {
+func prepForms(a, b *Form) {
 	a.Fields = append(a.Fields, a.ThankYouScreens...)
 	b.Fields = append(b.Fields, b.ThankYouScreens...)
 }
 
-func makeTranslator(form, destForm *FormJson, byRef bool) (*FormTranslator, error) {
+func makeTranslator(form, destForm *Form, byRef bool) (*FormTranslator, error) {
 	prepForms(form, destForm)
 
 	if len(form.Fields) != len(destForm.Fields) {
@@ -233,10 +244,10 @@ func makeTranslator(form, destForm *FormJson, byRef bool) (*FormTranslator, erro
 	return formTranslator, nil
 }
 
-func MakeTranslatorByShape(form, destForm *FormJson) (*FormTranslator, error) {
+func MakeTranslatorByShape(form, destForm *Form) (*FormTranslator, error) {
 	return makeTranslator(form, destForm, false)
 }
 
-func MakeTranslatorByRef(form, destForm *FormJson) (*FormTranslator, error) {
+func MakeTranslatorByRef(form, destForm *Form) (*FormTranslator, error) {
 	return makeTranslator(form, destForm, true)
 }
