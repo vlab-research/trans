@@ -215,7 +215,7 @@ func prepForms(a, b *Form) {
 func makeTranslator(form, destForm *Form, byRef bool) (*FormTranslator, error) {
 	prepForms(form, destForm)
 
-	if len(form.Fields) != len(destForm.Fields) {
+	if !byRef && len(form.Fields) != len(destForm.Fields){
 		return nil, &FormTranslationError{"Forms have different lengths!"}
 	}
 

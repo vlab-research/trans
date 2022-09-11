@@ -585,6 +585,103 @@ func TestMakeFormTranslatorByRef(t *testing.T) {
 	assert.Equal(t, "Male", ft.Fields["foo"].Mapping["पुरुष"])
 	assert.Equal(t, false, ft.Fields["baz"].Translate)
 	assert.Equal(t, 0, len(ft.Fields["baz"].Mapping))
-}
+} 
+
+
+func TestMakeFormTranslatorByRef_WorksIfBaseHasMoreFields(t *testing.T) {
+	jsons := []string{
+		`{"fields": [
+          {"id": "vjl6LihKMtcX",
+          "title": "आपका लिंग क्या है? ",
+          "ref": "foo",
+          "properties": {"choices": [{"label": "पुरुष"},
+                                    {"label": "महिला"},
+                                    {"label": "अन्य"}]},
+          "type": "multiple_choice"},
+          {"id": "mdUpJMSY8Lct",
+           "title": "वर्तमान में आप किस राज्य में रहते हैं?\n- A. छत्तीसगढ़\n- B. झारखंड\n- C. ओडिशा\n- D. उत्तर प्रदेश",
+           "ref": "bar",
+           "properties": {"choices": [{"label": "A"},
+                                      {"label": "B"},
+                                      {"label": "C"},
+                                      {"label": "D"}]},
+           "type": "multiple_choice"}]}`,
+		`{"fields": [
+          {"title": "Which state do you currently live in?\n- A. foo 91  bar\n- B. Jharkhand\n- C. Odisha\n- D. Uttar Pradesh",
+           "ref": "bar",
+           "properties": {"choices": [{"label": "A"},
+                                      {"label": "B"},
+                                      {"label": "C"},
+                                      {"label": "D"}]},
+           "type": "multiple_choice"},
+          {"title": "What do you like?\n- A. foo\n- B. bar",
+           "ref": "barr",
+           "properties": {"choices": [{"label": "A"},
+                                      {"label": "B"}]}},
+           {"title": "What is your gender? ",
+           "ref": "foo",
+           "properties": {
+              "choices": [{"label": "Male"},
+                          {"label": "Female"},
+                          {"label": "Other"}]},
+           "type": "multiple_choice"}]}`}
+
+	forms := []Form{}
+	for _, j := range jsons {
+		f := new(Form)
+		json.Unmarshal([]byte(j), f)
+		forms = append(forms, *f)
+	}
+
+	ft, err := MakeTranslatorByRef(&forms[0], &forms[1])
+	assert.Nil(t, err)
+	assert.Equal(t, "Uttar Pradesh", ft.Fields["bar"].Mapping["D"])
+	assert.Equal(t, "Male", ft.Fields["foo"].Mapping["पुरुष"])
+	assert.Equal(t, 2, len(ft.Fields))
+} 
+
+
+func TestMakeFormTranslatorByRef_ThrowsIfMissingRefInBase(t *testing.T) {
+	jsons := []string{
+		`{"fields": [
+          {"id": "vjl6LihKMtcX",
+          "title": "आपका लिंग क्या है? ",
+          "ref": "foo",
+          "properties": {"choices": [{"label": "पुरुष"},
+                                    {"label": "महिला"},
+                                    {"label": "अन्य"}]},
+          "type": "multiple_choice"},
+          {"id": "mdUpJMSY8Lct",
+           "title": "वर्तमान में आप किस राज्य में रहते हैं?\n- A. छत्तीसगढ़\n- B. झारखंड\n- C. ओडिशा\n- D. उत्तर प्रदेश",
+           "ref": "bar",
+           "properties": {"choices": [{"label": "A"},
+                                      {"label": "B"},
+                                      {"label": "C"},
+                                      {"label": "D"}]},
+           "type": "multiple_choice"}]}`,
+		`{"fields": [
+          {"title": "Which state do you currently live in?\n- A. foo 91  bar\n- B. Jharkhand\n- C. Odisha\n- D. Uttar Pradesh",
+           "ref": "bar",
+           "properties": {"choices": [{"label": "A"},
+                                      {"label": "B"},
+                                      {"label": "C"},
+                                      {"label": "D"}]},
+           "type": "multiple_choice"},
+          {"title": "What do you like?\n- A. foo\n- B. bar",
+           "ref": "barr",
+           "properties": {"choices": [{"label": "A"},
+                                      {"label": "B"}]}}]}`}
+
+	forms := []Form{}
+	for _, j := range jsons {
+		f := new(Form)
+		json.Unmarshal([]byte(j), f)
+		forms = append(forms, *f)
+	}
+
+	_, err := MakeTranslatorByRef(&forms[0], &forms[1])
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "ref foo")
+} 
 
 // DEAL WITH default_tys!!!
