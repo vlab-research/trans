@@ -13,16 +13,16 @@ type FieldChoice struct {
 }
 
 type FieldProperties struct {
-	Choices     []FieldChoice `json:"choices,omitempty"`
-	Description string        `json:"description,omitempty"`
+	Choices     []*FieldChoice `json:"choices,omitempty"`
+	Description string         `json:"description,omitempty"`
 }
 
 type Field struct {
-	ID         string          `json:"id,omitempty"`
-	Type       string          `json:"type,omitempty"`
-	Title      string          `json:"title,omitempty"`
-	Ref        string          `json:"ref,omitempty"`
-	Properties FieldProperties `json:"properties,omitempty"`
+	ID         string           `json:"id,omitempty"`
+	Type       string           `json:"type,omitempty"`
+	Title      string           `json:"title,omitempty"`
+	Ref        string           `json:"ref,omitempty"`
+	Properties *FieldProperties `json:"properties,omitempty"`
 }
 
 type Workspace struct {
@@ -30,7 +30,7 @@ type Workspace struct {
 }
 
 type Form struct {
-	Workspace       Workspace       `json:"workspace,omitempty"`
+	Workspace       *Workspace      `json:"workspace,omitempty"`
 	Title           string          `json:"title"`
 	Fields          []*Field        `json:"fields"`
 	ThankYouScreens []*Field        `json:"thankyou_screens,omitempty"`
@@ -215,7 +215,7 @@ func prepForms(a, b *Form) {
 func makeTranslator(form, destForm *Form, byRef bool) (*FormTranslator, error) {
 	prepForms(form, destForm)
 
-	if !byRef && len(form.Fields) != len(destForm.Fields){
+	if !byRef && len(form.Fields) != len(destForm.Fields) {
 		return nil, &FormTranslationError{"Forms have different lengths!"}
 	}
 
