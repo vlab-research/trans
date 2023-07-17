@@ -60,7 +60,7 @@ func (e *FormTranslationError) Error() string {
 }
 
 func ExtractLabels(options string) ([]*Answer, error) {
-	character := `[A-Z]` // [\p{L}] for unicode? Only caps?
+	character := `[\p{L}0-9]` // [\p{L}] for unicode? Only caps?
 	base := `(?:^|\n)(?:- ?(%s)(?:[^\S\r\n]|[\p{Pd}-\.\)])+|(%s)[\p{Pd}-\.\)]+[^\S\r\n]?)([^\n]+)`
 	r, _ := regexp.Compile(fmt.Sprintf(base, character, character))
 	matches := r.FindAllStringSubmatch(options, -1)

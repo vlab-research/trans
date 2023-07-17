@@ -64,6 +64,18 @@ func TestExtractLabels(t *testing.T) {
 	assert.Equal(t, "A", matches[0].Response)
 	assert.Equal(t, "dog walks in", matches[0].Value)
 
+	matches, err = ExtractLabels("1. dog walks in")
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(matches))
+	assert.Equal(t, "1", matches[0].Response)
+	assert.Equal(t, "dog walks in", matches[0].Value)
+
+	matches, err = ExtractLabels("ج. dog walks in")
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(matches))
+	assert.Equal(t, "ج", matches[0].Response)
+	assert.Equal(t, "dog walks in", matches[0].Value)
+
 	matches, _ = ExtractLabels("-A. dog walks in\n-B. cat walks in")
 	assert.Equal(t, 2, len(matches))
 	assert.Equal(t, "A", matches[0].Response)
@@ -83,6 +95,20 @@ func TestExtractLabels(t *testing.T) {
 	assert.Equal(t, "A", matches[0].Response)
 	assert.Equal(t, "dog walks in", matches[0].Value)
 	assert.Equal(t, "B", matches[1].Response)
+	assert.Equal(t, "cat walks in", matches[1].Value)
+
+	matches, _ = ExtractLabels("Hello paragraph\nA man\n1) dog walks in\n2) cat walks in")
+	assert.Equal(t, 2, len(matches))
+	assert.Equal(t, "1", matches[0].Response)
+	assert.Equal(t, "dog walks in", matches[0].Value)
+	assert.Equal(t, "2", matches[1].Response)
+	assert.Equal(t, "cat walks in", matches[1].Value)
+
+	matches, _ = ExtractLabels("Hello paragraph\nA man\nج) dog walks in\nد) cat walks in")
+	assert.Equal(t, 2, len(matches))
+	assert.Equal(t, "ج", matches[0].Response)
+	assert.Equal(t, "dog walks in", matches[0].Value)
+	assert.Equal(t, "د", matches[1].Response)
 	assert.Equal(t, "cat walks in", matches[1].Value)
 
 	// example that switches from hyphens to en-dashes...
@@ -585,8 +611,7 @@ func TestMakeFormTranslatorByRef(t *testing.T) {
 	assert.Equal(t, "Male", ft.Fields["foo"].Mapping["पुरुष"])
 	assert.Equal(t, false, ft.Fields["baz"].Translate)
 	assert.Equal(t, 0, len(ft.Fields["baz"].Mapping))
-} 
-
+}
 
 func TestMakeFormTranslatorByRef_WorksIfBaseHasMoreFields(t *testing.T) {
 	jsons := []string{
@@ -638,8 +663,7 @@ func TestMakeFormTranslatorByRef_WorksIfBaseHasMoreFields(t *testing.T) {
 	assert.Equal(t, "Uttar Pradesh", ft.Fields["bar"].Mapping["D"])
 	assert.Equal(t, "Male", ft.Fields["foo"].Mapping["पुरुष"])
 	assert.Equal(t, 2, len(ft.Fields))
-} 
-
+}
 
 func TestMakeFormTranslatorByRef_ThrowsIfMissingRefInBase(t *testing.T) {
 	jsons := []string{
@@ -682,6 +706,6 @@ func TestMakeFormTranslatorByRef_ThrowsIfMissingRefInBase(t *testing.T) {
 	_, err := MakeTranslatorByRef(&forms[0], &forms[1])
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "ref foo")
-} 
+}
 
 // DEAL WITH default_tys!!!
