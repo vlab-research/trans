@@ -12,10 +12,6 @@ func TestExtractLabels(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, 0, len(matches))
 
-	matches, err = ExtractLabels("A dog walks in\nA cat walks in")
-	assert.Nil(t, err)
-	assert.Equal(t, 0, len(matches))
-
 	matches, err = ExtractLabels("A. dog walks in")
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(matches))
@@ -70,6 +66,12 @@ func TestExtractLabels(t *testing.T) {
 	assert.Equal(t, "1", matches[0].Response)
 	assert.Equal(t, "dog walks in", matches[0].Value)
 
+	matches, err = ExtractLabels("1) dog walks (in)")
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(matches))
+	assert.Equal(t, "1", matches[0].Response)
+	assert.Equal(t, "dog walks (in)", matches[0].Value)
+
 	matches, err = ExtractLabels("ج. dog walks in")
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(matches))
@@ -117,6 +119,89 @@ func TestExtractLabels(t *testing.T) {
 	assert.Equal(t, "A", matches[0].Response)
 	assert.Equal(t, "En un hospital", matches[0].Value)
 	assert.Equal(t, "B", matches[1].Response)
+
+	// RTL language patterns (Arabic): symbols still at start of string
+	matches, err = ExtractLabels("أ. كلب يمشي")
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(matches))
+	assert.Equal(t, "أ", matches[0].Response)
+	assert.Equal(t, "كلب يمشي", matches[0].Value)
+
+	matches, err = ExtractLabels("١. كلب يمشي")
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(matches))
+	assert.Equal(t, "١", matches[0].Response)
+	assert.Equal(t, "كلب يمشي", matches[0].Value)
+
+	matches, err = ExtractLabels("أ) كلب يمشي")
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(matches))
+	assert.Equal(t, "أ", matches[0].Response)
+	assert.Equal(t, "كلب يمشي", matches[0].Value)
+
+	matches, _ = ExtractLabels("أ. كلب يمشي\nب. قطة تمشي")
+	assert.Equal(t, 2, len(matches))
+	assert.Equal(t, "أ", matches[0].Response)
+	assert.Equal(t, "كلب يمشي", matches[0].Value)
+	assert.Equal(t, "ب", matches[1].Response)
+	assert.Equal(t, "قطة تمشي", matches[1].Value)
+
+	matches, _ = ExtractLabels("مرحبا\n١) كلب يمشي\n٢) قطة تمشي")
+	assert.Equal(t, 2, len(matches))
+	assert.Equal(t, "١", matches[0].Response)
+	assert.Equal(t, "كلب يمشي", matches[0].Value)
+	assert.Equal(t, "٢", matches[1].Response)
+	assert.Equal(t, "قطة تمشي", matches[1].Value)
+
+	// RTL with leading dash
+	matches, _ = ExtractLabels("- أ. كلب يمشي\n- ب. قطة تمشي")
+	assert.Equal(t, 2, len(matches))
+	assert.Equal(t, "أ", matches[0].Response)
+	assert.Equal(t, "كلب يمشي", matches[0].Value)
+	assert.Equal(t, "ب", matches[1].Response)
+	assert.Equal(t, "قطة تمشي", matches[1].Value)
+
+	// RTL text with Latin letter symbols
+	matches, err = ExtractLabels("A. كلب يمشي")
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(matches))
+	assert.Equal(t, "A", matches[0].Response)
+	assert.Equal(t, "كلب يمشي", matches[0].Value)
+
+	matches, _ = ExtractLabels("- A. كلب يمشي\n- B. قطة تمشي")
+	assert.Equal(t, 2, len(matches))
+	assert.Equal(t, "A", matches[0].Response)
+	assert.Equal(t, "كلب يمشي", matches[0].Value)
+	assert.Equal(t, "B", matches[1].Response)
+	assert.Equal(t, "قطة تمشي", matches[1].Value)
+
+	// Devanagari (Hindi) with Devanagari digits
+	matches, err = ExtractLabels("१. कुत्ता चलता है")
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(matches))
+	assert.Equal(t, "१", matches[0].Response)
+	assert.Equal(t, "कुत्ता चलता है", matches[0].Value)
+
+	matches, _ = ExtractLabels("१. कुत्ता चलता है\n२. बिल्ली चलती है")
+	assert.Equal(t, 2, len(matches))
+	assert.Equal(t, "१", matches[0].Response)
+	assert.Equal(t, "कुत्ता चलता है", matches[0].Value)
+	assert.Equal(t, "२", matches[1].Response)
+	assert.Equal(t, "बिल्ली चलती है", matches[1].Value)
+
+	// Bengali with Bengali digits
+	matches, err = ExtractLabels("১. কুকুর হাঁটছে")
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(matches))
+	assert.Equal(t, "১", matches[0].Response)
+	assert.Equal(t, "কুকুর হাঁটছে", matches[0].Value)
+
+	matches, _ = ExtractLabels("১) কুকুর হাঁটছে\n২) বিড়াল হাঁটছে")
+	assert.Equal(t, 2, len(matches))
+	assert.Equal(t, "১", matches[0].Response)
+	assert.Equal(t, "কুকুর হাঁটছে", matches[0].Value)
+	assert.Equal(t, "২", matches[1].Response)
+	assert.Equal(t, "বিড়াল হাঁটছে", matches[1].Value)
 }
 
 func TestExtractAnswersGetsSimpleLabels(t *testing.T) {

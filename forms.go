@@ -60,7 +60,11 @@ func (e *FormTranslationError) Error() string {
 }
 
 func ExtractLabels(options string) ([]*Answer, error) {
-	character := `[\p{L}0-9]` // [\p{L}] for unicode? Only caps?
+	// Unicode letters, various digit systems, and emoji range
+	// Supports: ASCII (0-9), Arabic-Indic (٠-٩), Extended Arabic-Indic (۰-۹),
+	//           Devanagari (०-९), Bengali (০-৯), and emoji
+	// Works for both LTR and RTL languages - symbols/numbers are always at the start of the string
+	character := `[\p{L}0-9\x{0660}-\x{0669}\x{06F0}-\x{06F9}\x{0966}-\x{096F}\x{09E6}-\x{09EF}\x{1F300}-\x{1F6FF}]`
 	base := `(?:^|\n)(?:- ?(%s)(?:[^\S\r\n]|[\p{Pd}-\.\)])+|(%s)[\p{Pd}-\.\)]+[^\S\r\n]?)([^\n]+)`
 	r, _ := regexp.Compile(fmt.Sprintf(base, character, character))
 	matches := r.FindAllStringSubmatch(options, -1)
