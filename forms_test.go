@@ -226,6 +226,24 @@ func TestExtractLabels(t *testing.T) {
 	assert.Equal(t, "١", matches[1].Response)
 	assert.Equal(t, "٢", matches[2].Response)
 	assert.Equal(t, "٣", matches[3].Response)
+
+	// Edge case: paragraph text with spaces should NOT match
+	matches, err = ExtractLabels("This is a paragraph.\n And it continues here.")
+	assert.Nil(t, err)
+	assert.Equal(t, 0, len(matches))
+
+	// Edge case: sentences starting with letter and period should NOT match
+	matches, err = ExtractLabels("Here is some text.\n A sentence that starts with A.")
+	assert.Nil(t, err)
+	assert.Equal(t, 0, len(matches))
+
+	// Edge case: mixed content should only extract list items
+	matches, _ = ExtractLabels("Some intro text\nA. Option one\n B. Option two\nSome closing text")
+	assert.Equal(t, 2, len(matches))
+	assert.Equal(t, "A", matches[0].Response)
+	assert.Equal(t, "Option one", matches[0].Value)
+	assert.Equal(t, "B", matches[1].Response)
+	assert.Equal(t, "Option two", matches[1].Value)
 }
 
 func TestExtractAnswersGetsSimpleLabels(t *testing.T) {
