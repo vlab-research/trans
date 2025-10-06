@@ -218,6 +218,14 @@ func TestExtractLabels(t *testing.T) {
 	assert.Equal(t, "1 hour", matches[1].Value)
 	assert.Equal(t, "99", matches[2].Response)
 	assert.Equal(t, "0 hours", matches[2].Value)
+
+	// Leading spaces (common in Excel)
+	matches, _ = ExtractLabels("٠) ٠.٥ ساعة أو أقل\n ١) ١ ساعة\n٢) ٢ ساعة\n ٣) ٣ ساعات")
+	assert.Equal(t, 4, len(matches))
+	assert.Equal(t, "٠", matches[0].Response)
+	assert.Equal(t, "١", matches[1].Response)
+	assert.Equal(t, "٢", matches[2].Response)
+	assert.Equal(t, "٣", matches[3].Response)
 }
 
 func TestExtractAnswersGetsSimpleLabels(t *testing.T) {
