@@ -202,6 +202,22 @@ func TestExtractLabels(t *testing.T) {
 	assert.Equal(t, "কুকুর হাঁটছে", matches[0].Value)
 	assert.Equal(t, "২", matches[1].Response)
 	assert.Equal(t, "বিড়াল হাঁটছে", matches[1].Value)
+
+	// Multi-digit numbers
+	matches, err = ExtractLabels("99) 0 hours")
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(matches))
+	assert.Equal(t, "99", matches[0].Response)
+	assert.Equal(t, "0 hours", matches[0].Value)
+
+	matches, _ = ExtractLabels("0) 0.5 hours or less\n1) 1 hour\n99) 0 hours")
+	assert.Equal(t, 3, len(matches))
+	assert.Equal(t, "0", matches[0].Response)
+	assert.Equal(t, "0.5 hours or less", matches[0].Value)
+	assert.Equal(t, "1", matches[1].Response)
+	assert.Equal(t, "1 hour", matches[1].Value)
+	assert.Equal(t, "99", matches[2].Response)
+	assert.Equal(t, "0 hours", matches[2].Value)
 }
 
 func TestExtractAnswersGetsSimpleLabels(t *testing.T) {

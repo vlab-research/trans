@@ -64,8 +64,9 @@ func ExtractLabels(options string) ([]*Answer, error) {
 	// Supports: ASCII (0-9), Arabic-Indic (٠-٩), Extended Arabic-Indic (۰-۹),
 	//           Devanagari (०-९), Bengali (০-৯), and emoji
 	// Works for both LTR and RTL languages - symbols/numbers are always at the start of the string
+	// Supports multi-digit numbers like "99"
 	character := `[\p{L}0-9\x{0660}-\x{0669}\x{06F0}-\x{06F9}\x{0966}-\x{096F}\x{09E6}-\x{09EF}\x{1F300}-\x{1F6FF}]`
-	base := `(?:^|\n)(?:- ?(%s)(?:[^\S\r\n]|[\p{Pd}-\.\)])+|(%s)[\p{Pd}-\.\)]+[^\S\r\n]?)([^\n]+)`
+	base := `(?:^|\n)(?:- ?(%s+)(?:[^\S\r\n]|[\p{Pd}-\.\)])+|(%s+)[\p{Pd}-\.\)]+[^\S\r\n]?)([^\n]+)`
 	r, _ := regexp.Compile(fmt.Sprintf(base, character, character))
 	matches := r.FindAllStringSubmatch(options, -1)
 
